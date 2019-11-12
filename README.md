@@ -26,3 +26,7 @@ _Recommendation: Update the "postpackage" script call in package.json to specify
 - Then you can call electron-packager directly with any commands you choose
 
 If you want to test the production build (In case you think Babili might be breaking something) after running `npm run build` you can then call `npm run prod`. This will cause electron to load off of the `dist/` build instead of looking for the webpack-dev-server instance. Electron will launch automatically after compilation.
+
+###### Acknowledgement
+
+This use boiler plate code from create-react-app and basic-electron-react-boilerplate
