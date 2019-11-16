@@ -1,12 +1,13 @@
-import { ADD_URL, DELETE_URL, EDIT_URL, CHANGE_PAGE } from "../actions/types";
+import {
+  ADD_URL,
+  DELETE_URL,
+  EDIT_URL,
+  CHANGE_PAGE,
+  RECEIVED_STATE
+} from "../actions/types";
 
-const initState = {
-  block_urls: [{ id: 0, dns: "facebook.com", visits: 0, maxvisits: 0 }],
-  currentPageNum: 0
-};
-
-const rootReducer = (state = initState, action) => {
-  console.log(state);
+const rootReducer = (state, action) => {
+  console.log("State: ", state, "\nAction: \n", action);
   switch (action.type) {
     case ADD_URL:
       return {
@@ -34,6 +35,11 @@ const rootReducer = (state = initState, action) => {
         ...state,
         currentPageNum: action.pageNum
       };
+    case RECEIVED_STATE:
+      var initState = action.state;
+      if (!initState.block_urls) initState.block_urls = [];
+      if (!initState.currentPageNum) initState.currentPageNum = 0;
+      return initState;
     default:
       return state;
   }

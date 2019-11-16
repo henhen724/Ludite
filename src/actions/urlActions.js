@@ -12,7 +12,7 @@ export const addUrl = () => dispatch => {
       maxvisits: 0
     }
   };
-  ipc.send(ADD_URL, newUrl);
+  ipc.send(ADD_URL, newUrl.url);
   dispatch(newUrl);
 };
 

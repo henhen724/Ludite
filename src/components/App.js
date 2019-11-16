@@ -6,8 +6,13 @@ import Setup from "./Setup";
 import Usage from "./Usage";
 import { Card, Tabs, Tab, Paper } from "@material-ui/core";
 import { gotoPage } from "../actions/pageActions";
+import { getState } from "../actions/startUpActions";
 
 class App extends Component {
+  componentDidMount() {
+    console.log("TEST");
+    this.props.getState();
+  }
   tabClicked = pageNum => () => this.props.gotoPage(pageNum);
   render() {
     var currentPage = <h1>PAGE NOT FOUND</h1>;
@@ -46,4 +51,4 @@ const mapStateToProps = state => {
   };
 };
 
-export default connect(mapStateToProps, { gotoPage })(App); //connect(mapStateToProps, { gotoPage })(App);
+export default connect(mapStateToProps, { gotoPage, getState })(App); //connect(mapStateToProps, { gotoPage })(App);

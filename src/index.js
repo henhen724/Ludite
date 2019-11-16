@@ -13,7 +13,7 @@ const middleware = [thunk];
 const store = createStore(
   rootReducer,
   {
-    block_urls: [{ id: 0, dns: "facebook.com", visits: 0, maxvisits: 0 }],
+    block_urls: [],
     currentPageNum: 0
   },
   applyMiddleware(...middleware)
