@@ -58,20 +58,20 @@ class Setup extends Component {
         </Button>
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <GridList cellHeight={70}>
-            {this.props.block_urls.map(url => (
-              <GridListTile key={url.id} lg={6}>
+            {this.props.block_urls.map(aUrl => (
+              <GridListTile key={aUrl.id} lg={6}>
                 <TextField
-                  defaultValue={url.dns}
-                  onChange={this.dnsChange(url.id)}
+                  defaultValue={aUrl.dns}
+                  onChange={this.dnsChange(aUrl.id)}
                 />
                 <TextField
-                  defaultValue={url.maxvisits}
-                  onChange={this.maxvisitsChange(url.id)}
+                  defaultValue={aUrl.maxvisits}
+                  onChange={this.maxvisitsChange(aUrl.id)}
                 />
                 <br />
                 <KeyboardTimePicker />
                 <KeyboardTimePicker />
-                <Button onClick={this.deleteClick(url.id)}>
+                <Button onClick={this.deleteClick(aUrl.id)}>
                   <Delete />
                 </Button>
               </GridListTile>

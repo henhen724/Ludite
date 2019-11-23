@@ -22,12 +22,14 @@ const rootReducer = (state, action) => {
     case EDIT_URL:
       return {
         ...state,
-        block_urls: state.block_urls.map(url => {
-          if (url.id === action.id) {
-            url.dns = action.dns ? action.dns : url.dns;
-            url.maxvisits = action.maxvisits ? action.maxvisits : url.maxvisits;
+        block_urls: state.block_urls.map(aUrl => {
+          if (aUrl.id === action.id) {
+            aUrl.dns = action.dns ? action.dns : aUrl.dns;
+            aUrl.maxvisits = action.maxvisits
+              ? action.maxvisits
+              : aUrl.maxvisits;
           }
-          return url;
+          return aUrl;
         })
       };
     case CHANGE_PAGE:

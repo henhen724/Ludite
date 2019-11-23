@@ -17,11 +17,11 @@ class Usage extends Component {
         <Paper>
           <Table>
             <TableHead>
-              {this.props.block_urls.map(url => (
-                <TableRow key={url.id}>
-                  <TableCell>{url.dns}</TableCell>
+              {this.props.block_urls.map(aUrl => (
+                <TableRow key={aUrl.id}>
+                  <TableCell>{aUrl.dns}</TableCell>
                   <TableCell>
-                    {url.visits}/{url.maxvisits}
+                    {aUrl.visits}/{aUrl.maxvisits}
                   </TableCell>
                 </TableRow>
               ))}

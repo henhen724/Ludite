@@ -12,6 +12,8 @@ _Using Electron, React, Redux, and Webpack_
 
 ##### Production
 
+EDIT THIS BEFORE PUBLISH
+
 _You have two options, an automatic build or two manual steps_
 
 ###### One Shot

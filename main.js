@@ -1,9 +1,10 @@
-"use strict";
+"using strict"
 
 // Import parts of electron to use
 const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
 const path = require("path");
 const url = require("url");
+const { execFile } = require("child_process");
 const {
   ADD_URL,
   DELETE_URL,
@@ -53,13 +54,12 @@ if (
     ]
   });
 }
-
+let WORKER_PROCESS;
 function startHiddenService() {
-  workerWindow = new BrowserWindow({
-    show: false,
-    webPreferences: { nodeIntegration: true }
+  WORKER_PROCESS = execFile("service/worker.js");
+  WORKER_PROCESS.on('message', (msg, handel) => {
+    console.log(masg, handel);
   });
-  workerWindow.loadFile("service/worker.html");
 }
 
 function createWindow() {
@@ -67,7 +67,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1024,
     height: 768,
-    show: false
+    show: false,
+    webPreferences: { nodeIntegration: true }
   });
 
   const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
@@ -101,7 +102,7 @@ function createWindow() {
   });
 
   // Emitted when the window is closed.
-  mainWindow.on("closed", function() {
+  mainWindow.on("closed", function () {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
@@ -112,7 +113,11 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-if (process.argv.indexOf("--hidden") === -1) app.on("ready", createWindow);
+if (process.argv.indexOf("--hidden") === -1)
+  app.on("ready", () => {
+    createWindow();
+    startHiddenService();
+  });
 else app.on("ready", startHiddenService);
 
 // Quit when all windows are closed.
@@ -133,9 +138,14 @@ app.on("activate", () => {
   }
 });
 
-//IPC event functions which write input from the render thread to file
 const statefilepath = "luditeurllist.data";
 const buf = Buffer.alloc(256);
+//IPC event functions from the worker
+ipc.on("message-from-worker", (event, arg) => {
+  console.log(arg);
+});
+
+//IPC event functions which write input from the render thread to file
 
 fs.access(statefilepath, err => {
   if (err) {
@@ -161,6 +171,7 @@ const performJsonActionOnFile = func => {
     if (err) throw err;
     var stateobject = JSON.parse(data);
     stateobject = func(stateobject);
+    console.log(stateobject);
     fs.writeFile(statefilepath, JSON.stringify(stateobject), "utf8", err => {
       if (err) throw err;
       console.log("Successfully saved.");
