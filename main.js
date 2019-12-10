@@ -146,15 +146,29 @@ ipc.on("message-from-worker", (event, arg) => {
   console.log(arg);
 });
 
+writeDefaultState = () => {
+  fs.writeFile(statefilepath, "{\"block_urls\":[]}", err => {
+    if (err) {
+      console.log("Unable to write file.");
+      throw err;
+    }
+  });
+}
+
 //IPC event functions which write input from the render thread to file
-fs.access(statefilepath, err => {
+fs.readFile(statefilepath, (err, data) => {
   if (err) {
-    fs.writeFile(statefilepath, "{}", err => {
-      if (err) {
-        console.log("Unable to write file.");
-        throw err;
-      }
-    });
+    console.log("READ ERROR: ", err);
+    writeDefaultState();
+  }
+  else {
+    try {
+      JSON.parse(data)
+    }
+    catch (err2) {
+      console.log("JSON PARSE ERROR: ", err2, "\n\nDATA: ", data);
+      writeDefaultState();
+    }
   }
 });
 
@@ -182,7 +196,6 @@ const performJsonActionOnFile = func => {
 ipc.on(ADD_URL, (event, arg) => {
   console.log("A url was added", arg);
   performJsonActionOnFile(stateobj => {
-    if (!stateobj.block_urls) stateobj.block_urls = [];
     stateobj.block_urls.push(arg);
     return stateobj;
   });
@@ -191,11 +204,20 @@ ipc.on(ADD_URL, (event, arg) => {
 ipc.on(DELETE_URL, (event, arg) => {
   console.log("A url was deleted", arg);
   performJsonActionOnFile(stateobj => {
-    if (!stateobj.block_urls) stateobj.block_urls = [];
     return stateobj.block_urls.filter(url => url.id == arg);
   });
 });
 
 ipc.on(EDIT_URL, (event, arg) => {
   console.log("A url was edit", arg);
+  performJsonActionOnFile(stateobj => {
+    stateobj.block_urls = stateobj.block_urls.map(url => {
+      if (url.id == arg.id) {
+        if (arg.maxvisits != null) url.maxvisits = arg.maxvisits;
+        if (arg.dns != null) url.dns = arg.dns;
+      }
+      return url;
+    });
+    return stateobj
+  });
 });
