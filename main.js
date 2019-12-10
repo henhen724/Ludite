@@ -4,7 +4,7 @@
 const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
 const path = require("path");
 const url = require("url");
-const { execFile } = require("child_process");
+//const { execFile } = require("child_process");
 const {
   ADD_URL,
   DELETE_URL,
@@ -56,10 +56,11 @@ if (
 }
 let WORKER_PROCESS;
 function startHiddenService() {
-  WORKER_PROCESS = execFile("service/worker.js");
-  WORKER_PROCESS.on('message', (msg, handel) => {
-    console.log(masg, handel);
-  });
+  // WORKER_PROCESS = execFile("service/worker.js");
+  // WORKER_PROCESS.on('message', (msg, handel) => {
+  //   console.log(masg, handel);
+  // });
+  console.log("COMMENTED OUT START HIDDEN SERVICE")
 }
 
 function createWindow() {
@@ -138,7 +139,7 @@ app.on("activate", () => {
   }
 });
 
-const statefilepath = "luditeurllist.data";
+const statefilepath = ".luditedata";
 const buf = Buffer.alloc(256);
 //IPC event functions from the worker
 ipc.on("message-from-worker", (event, arg) => {
@@ -146,7 +147,6 @@ ipc.on("message-from-worker", (event, arg) => {
 });
 
 //IPC event functions which write input from the render thread to file
-
 fs.access(statefilepath, err => {
   if (err) {
     fs.writeFile(statefilepath, "{}", err => {

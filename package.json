@@ -8,7 +8,6 @@
     "type": "git",
     "url": "https://github.com/henhen724/Ludite.git"
   },
-  "license": "MIT",
   "main": "main.js",
   "scripts": {
     "prod": "webpack --config webpack.build.config.js && electron --noDevServer .",
@@ -52,6 +51,8 @@
     "ffi-napi": "^2.4.5",
     "iconv": "^2.3.5",
     "nan": "^2.14.0",
-    "node-ipc": "^9.1.1"
+    "node-ipc": "^9.1.1",
+    "node-netstat": "^1.8.0",
+    "npm": "^6.13.1"
   }
 }
