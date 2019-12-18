@@ -7,15 +7,13 @@ import thunk from "redux-thunk";
 
 import "./assets/css/index.css";
 import rootReducer from "./reducers/rootReducer";
+import defaultState from "../config/defaultstate";
 
 //Setup redux store
 const middleware = [thunk];
 const store = createStore(
   rootReducer,
-  {
-    block_urls: [],
-    currentPageNum: 0
-  },
+  defaultState,
   applyMiddleware(...middleware)
 );
 

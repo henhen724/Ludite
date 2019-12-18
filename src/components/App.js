@@ -10,7 +10,6 @@ import { getState } from "../actions/startUpActions";
 
 class App extends Component {
   componentDidMount() {
-    console.log("TEST");
     this.props.getState();
   }
   tabClicked = pageNum => () => this.props.gotoPage(pageNum);
