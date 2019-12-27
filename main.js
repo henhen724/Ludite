@@ -2,9 +2,11 @@
 
 // Import parts of electron to use
 const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
+const fileIpc = require("node-ipc");
+const { workerId, awakeMsg } = require("./service/config");
 const path = require("path");
 const url = require("url");
-//const { execFile } = require("child_process");
+const { spawn } = require("child_process");
 const {
   ADD_URL,
   DELETE_URL,
@@ -12,11 +14,14 @@ const {
   RECEIVED_STATE,
   REQUEST_STATE
 } = require("./src/actions/types");
+const { PATH: statefilepath } = require("./config/statefilepath");
+const { loadStateFile } = require("./config/util");
+const defaultState = require("./config/defaultstate");
 const fs = require("fs");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow, workerWindow;
+let mainWindow;
 
 const mainMenuTemplate = [
   {
@@ -54,13 +59,21 @@ if (
     ]
   });
 }
-let WORKER_PROCESS;
-function startHiddenService() {
-  // WORKER_PROCESS = execFile("service/worker.js");
-  // WORKER_PROCESS.on('message', (msg, handel) => {
-  //   console.log(masg, handel);
-  // });
-  console.log("COMMENTED OUT START HIDDEN SERVICE")
+
+
+fileIpc.config.retry = 1;
+fileIpc.config.stopRetrying = true;
+
+async function startHiddenService() {
+  fileIpc.connectTo(workerId, () => {
+    if(fileIpc.of[workerId].socket.server === null)
+    {
+      spawn("node",  [path.join(__dirname, '/service/worker.js')]);
+      console.log("spawning worker.");
+    }
+    else
+      console.log("Worker found: ", fileIpc.of[workerId].socket);
+  })
 }
 
 function createWindow() {
@@ -139,15 +152,10 @@ app.on("activate", () => {
   }
 });
 
-const statefilepath = ".luditedata";
 const buf = Buffer.alloc(256);
-//IPC event functions from the worker
-ipc.on("message-from-worker", (event, arg) => {
-  console.log(arg);
-});
 
 writeDefaultState = () => {
-  fs.writeFile(statefilepath, "{\"block_urls\":[]}", err => {
+  fs.writeFile(statefilepath, JSON.stringify(defaultState), err => {
     if (err) {
       console.log("Unable to write file.");
       throw err;
@@ -156,21 +164,26 @@ writeDefaultState = () => {
 }
 
 //IPC event functions which write input from the render thread to file
-fs.readFile(statefilepath, (err, data) => {
-  if (err) {
-    console.log("READ ERROR: ", err);
-    writeDefaultState();
-  }
-  else {
-    try {
-      JSON.parse(data)
-    }
-    catch (err2) {
-      console.log("JSON PARSE ERROR: ", err2, "\n\nDATA: ", data);
-      writeDefaultState();
-    }
-  }
-});
+
+
+try {
+  fs.watch(statefilepath, (eventType, filename) => {
+    console.log(eventType);
+    loadStateFile().then(data => {
+      stateObj = data;
+      if(typeof mainWindow !== 'undefined' && mainWindow !== null)
+        mainWindow.webContents.send(RECEIVED_STATE, stateObj);
+    }).catch(error => console.log(error));
+  })
+}
+catch (err) {
+  console.log(err);
+  writeDefaultState();
+}
+
+loadStateFile().then(data => {
+  stateObj = data;
+}).catch(error => console.log(error));
 
 ipc.on(REQUEST_STATE, (event, arg) => {
   fs.readFile(statefilepath, "utf8", (err, data) => {
@@ -183,10 +196,10 @@ ipc.on(REQUEST_STATE, (event, arg) => {
 const performJsonActionOnFile = func => {
   fs.readFile(statefilepath, "utf8", (err, data) => {
     if (err) throw err;
-    var stateobject = JSON.parse(data);
-    stateobject = func(stateobject);
-    console.log(stateobject);
-    fs.writeFile(statefilepath, JSON.stringify(stateobject), "utf8", err => {
+    var stateObject = JSON.parse(data);
+    stateObject = func(stateObject);
+    console.log(stateObject);
+    fs.writeFile(statefilepath, JSON.stringify(stateObject), "utf8", err => {
       if (err) throw err;
       console.log("Successfully saved.");
     });
@@ -195,29 +208,29 @@ const performJsonActionOnFile = func => {
 
 ipc.on(ADD_URL, (event, arg) => {
   console.log("A url was added", arg);
-  performJsonActionOnFile(stateobj => {
-    stateobj.block_urls.push(arg);
-    return stateobj;
+  performJsonActionOnFile(stateObj => {
+    stateObj.block_urls.push(arg);
+    return stateObj;
   });
 });
 
 ipc.on(DELETE_URL, (event, arg) => {
   console.log("A url was deleted", arg);
-  performJsonActionOnFile(stateobj => {
-    return stateobj.block_urls.filter(url => url.id == arg);
+  performJsonActionOnFile(stateObj => {
+    return stateObj.block_urls.filter(url => url.id == arg);
   });
 });
 
 ipc.on(EDIT_URL, (event, arg) => {
   console.log("A url was edit", arg);
-  performJsonActionOnFile(stateobj => {
-    stateobj.block_urls = stateobj.block_urls.map(url => {
+  performJsonActionOnFile(stateObj => {
+    stateObj.block_urls = stateObj.block_urls.map(url => {
       if (url.id == arg.id) {
         if (arg.maxvisits != null) url.maxvisits = arg.maxvisits;
         if (arg.dns != null) url.dns = arg.dns;
       }
       return url;
     });
-    return stateobj
+    return stateObj
   });
 });

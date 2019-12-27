@@ -4,6 +4,9 @@ import { Provider } from "react-redux";
 import App from "./components/App";
 import { createStore, applyMiddleware } from "redux";
 import thunk from "redux-thunk";
+import { ipcRenderer as ipc } from "electron";
+import { onUpdate } from "./actions/workerActions";
+import { RECEIVED_STATE } from "./actions/types";
 
 import "./assets/css/index.css";
 import rootReducer from "./reducers/rootReducer";
@@ -16,6 +19,11 @@ const store = createStore(
   defaultState,
   applyMiddleware(...middleware)
 );
+
+ipc.on(RECEIVED_STATE, arg => {
+  console.log("Recieved State: ", arg);
+  onUpdate(arg)(store.dispatch);
+})
 
 // Now we can render our application into it
 render(

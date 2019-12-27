@@ -40,7 +40,7 @@ const rootReducer = (state, action) => {
     case RECEIVED_STATE:
       var initState = action.state;
       if (!initState.block_urls) initState.block_urls = [];
-      if (!initState.currentPageNum) initState.currentPageNum = 0;
+      if (!initState.currentPageNum) initState.currentPageNum = state.currentPageNum;
       return initState;
     default:
       return state;

@@ -41,7 +41,8 @@ class App extends Component {
 
 App.propTypes = {
   gotoPage: PropTypes.func.isRequired,
-  currentPageNum: PropTypes.number.isRequired
+  currentPageNum: PropTypes.number.isRequired,
+  getState: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => {
