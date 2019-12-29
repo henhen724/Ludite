@@ -2,8 +2,15 @@
   "name": "ludite",
   "version": "0.0.2",
   "description": "Social punishment self control app",
-  "author": "Henry Hunt",
+  "author": {
+    "name": "Henry Hunt",
+    "email": "hshunt@uchicago.edu"
+  },
   "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/henhen724/Ludite/issues",
+    "email": "hshunt@uchicago.edu"
+  },
   "homepage": "https://github.com/henhen724/Ludite",
   "repository": {
     "type": "git",
@@ -50,10 +57,9 @@
   },
   "dependencies": {
     "ffi-napi": "^2.4.5",
+    "forever": "^1.0.0",
     "iconv": "^2.3.5",
     "nan": "^2.14.0",
-    "node-ipc": "^9.1.1",
-    "node-netstat": "^1.8.0",
     "npm": "^6.13.1",
     "ps-list": "^6.3.0"
   }

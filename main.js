@@ -3,7 +3,7 @@
 // Import parts of electron to use
 const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
 const fileIpc = require("node-ipc");
-const { workerId, awakeMsg } = require("./service/config");
+const { workerId, workerMsg, awakeMsg } = require("./service/config");
 const path = require("path");
 const url = require("url");
 const { spawn } = require("child_process");
@@ -63,17 +63,37 @@ if (
 
 fileIpc.config.retry = 1;
 fileIpc.config.stopRetrying = true;
+let randNum = Math.random();
+let connect = false;
+
+function connectToWorker() {
+  fileIpc.connectTo(workerId, () => {
+    fileIpc.of[workerId].on('connect', () => {
+      console.log("Connected to worker.");
+    })
+  });
+}
+connectToWorker();
 
 async function startHiddenService() {
-  fileIpc.connectTo(workerId, () => {
-    if(fileIpc.of[workerId].socket.server === null)
-    {
-      spawn("node",  [path.join(__dirname, '/service/worker.js')]);
-      console.log("spawning worker.");
-    }
-    else
-      console.log("Worker found: ", fileIpc.of[workerId].socket);
-  })
+  var connected = false;
+  const randNum = Math.random();
+  fileIpc.of[workerId].on(workerMsg, data => {
+    console.log("Connected with ", workerMsg, " seed: ", data);
+    if(data === randNum)
+      connected = true;
+  });
+  fileIpc.of[workerId].emit(awakeMsg, randNum);
+  setTimeout(() => {
+      if(!connected)
+      {
+        spawn("node",  [path.join(__dirname, '/service/worker.js')]);
+        console.log("spawning worker.");
+        setTimeout(connectToWorker, 500);
+      }
+      else
+        console.log("Worker found: ", connected);
+    }, 500);
 }
 
 function createWindow() {

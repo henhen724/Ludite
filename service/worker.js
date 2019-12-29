@@ -1,20 +1,10 @@
-const { workerId, testWorkerId, workerMsg, testWorkerMsg, awakeMsg } = require("./config.js");
 const activeWin = require("active-win");
 const fs = require("fs");
-const ipc = require("node-ipc");
-const netstat = require("node-netstat");
 const psList = require("ps-list");
 const defaultState = require("../config/defaultstate");
 const { PATH: statefilepath } = require("../config/statefilepath");
-const { loadStateFile } = require("../config/util");
+const { loadStateFile, netstat } = require("../config/util");
 const dns = require("dns");
-
-ipc.config.id = workerId;
-ipc.config.retry = 1;
-ipc.config.logger = console.log.bind(console);
-ipc.serve(() => ipc.server.on(awakeMsg, (data, socket) => {
-  ipc.server.emit(socket, workerMsg, data);
-}));
 
 //USE NODEMAILER TO SEND EMAIL
 
@@ -107,33 +97,40 @@ findWindows = async () => {
 };
 
 //Setup netstat listener for out going packets
-netstat({ watch: true }, item => {
-  if (!isNaN(item.remote.port) && item.remote.address != null && item.remote.address != '127.0.0.1') {
-    if (prosConnDict[item.pid] === undefined)
-      prosConnDict[item.pid] = []
-    prevConn = prosConnDict[item.pid].find(addrtime => addrtime.address === item.remote.address)
-    if (typeof prevConn === 'undefined' || prevConn === null)
-    {
-      prosConnDict[item.pid].push({ address: item.remote.address, time: Date.now() });
-      if(typeof blockIP2Dns[item.remote.address] !== 'undefined')
-      {
-        stateObj.block_urls = stateObj.block_urls.map(urlObj => {
-          if (urlObj.dns === blockIP2Dns[item.remote.address])
-            urlObj.visits += 1;
-          return urlObj;
-        })
-        saveState();
-      }
-    }
-    else
-      prosConnDict[item.pid] = prosConnDict[item.pid].map(addrtime => {
-        if (addrtime.address === item.remote.address)
-          return { address: addrtime.address, time: Date.now() };
+const updateProsConnDict = () => {
+  netstat().then(itemlist => {
+    itemlist.forEach(item => {
+      if(!item)
+        return;
+      if (!isNaN(item.remote.port) && item.remote.address != null && item.remote.address != '127.0.0.1') {
+        if (prosConnDict[item.pid] === undefined)
+          prosConnDict[item.pid] = []
+        prevConn = prosConnDict[item.pid].find(addrtime => addrtime.address === item.remote.address)
+        if (typeof prevConn === 'undefined' || prevConn === null)
+        {
+          prosConnDict[item.pid].push({ address: item.remote.address, time: Date.now() });
+          if(typeof blockIP2Dns[item.remote.address] !== 'undefined')
+          {
+            stateObj.block_urls = stateObj.block_urls.map(urlObj => {
+              if (urlObj.dns === blockIP2Dns[item.remote.address])
+                urlObj.visits += 1;
+              return urlObj;
+            })
+            saveState();
+          }
+        }
         else
-          return addrtime;
-      })
-  }
-});
+          prosConnDict[item.pid] = prosConnDict[item.pid].map(addrtime => {
+            if (addrtime.address === item.remote.address)
+              return { address: addrtime.address, time: Date.now() };
+            else
+              return addrtime;
+          })
+      }
+    })
+    setTimeout(updateProsConnDict, 500);
+  });
+}
 
 updateProcessTable = async () => {
   var processTable = await psList();
@@ -163,7 +160,7 @@ removeTimeoutConn = async () => {
 }
 
 printInfo = async () => {
-  console.clear();
+  //console.clear();
   console.log("Open Connections:");
   console.table(Object.keys(prosConnDict).map((pid, index) => { return { 'pid': pid, 'address': prosConnDict[pid].map(addrtime => addrtime.address) }; }));
   console.log("App Process Dictionary:");
@@ -186,8 +183,8 @@ loadStateFile().then(data => {
 }).catch(error => console.log(error));
 
 //Start 3 async threads
-ipc.server.start();
 updateProcessTable();
+updateProsConnDict();
 removeTimeoutConn();
 findWindows();
-// printInfo();
+printInfo();
