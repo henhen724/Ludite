@@ -3,7 +3,7 @@ const fs = require("fs");
 const psList = require("ps-list");
 const defaultState = require("../config/defaultstate");
 const { PATH: statefilepath } = require("../config/statefilepath");
-const { loadStateFile, netstat } = require("../config/util");
+const { loadStateFile, netstat, fastlist } = require("../config/util");
 const dns = require("dns");
 
 //USE NODEMAILER TO SEND EMAIL
@@ -133,7 +133,11 @@ const updateProsConnDict = () => {
 }
 
 updateProcessTable = async () => {
-  var processTable = await psList();
+  var processTable;
+  if(process.platform === 'win32')
+    processTable = await fastlist();
+  else
+    processTable = await psList();
   // console.log(processTable);
   if (typeof processTable === 'undefined' || processTable === null)
     return setTimeout(updateProcessTable, 1000)

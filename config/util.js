@@ -1,7 +1,9 @@
+const path = require("path");
 const { PATH: statefilepath } = require('./statefilepath');
 const fs = require("fs");
 const { spawn } = require("child_process");
 
+//JSON FILE LOAD
 loadStateFile = () => {
   return new Promise((resolve, reject) => {
     fs.readFile(statefilepath, (err, data) => {
@@ -30,9 +32,8 @@ loadStateFile = () => {
   })
 }
 
-
+// NETSTAT JS WRAPER
 // NETSTAT PARSERS
-
 const parseAddress = raw => {
   var port = null,
       address = null;
@@ -168,6 +169,9 @@ switch(process.platform)
   default:
     throw new Error("INVALID PLATFORM: ", process.platform);
 }
+
+// NETSTAT EXEC
+
 const netstat = () => {
   // console.log(netstatcmd)
   // console.log(netstatparser)
@@ -191,5 +195,43 @@ const netstat = () => {
   });
 }
 
+//END OF NETSTAT CODE
+
+//FASTLIST EXEC AND PARSER
+const TEN_MEGABYTES = 1000 * 1000 * 10;
+
+const fastlist = async () => {
+	const bin = path.join(__dirname, '../node_modules/ps-list/fastlist.exe');
+  const fullstdout = await new Promise((resolve, reject) => {
+    const childprocess = spawn(bin, {maxBuffer: TEN_MEGABYTES, detached: true});
+    var stdout = '';
+    var stderr = '';
+    childprocess.stdout.on('data', data => {
+      stdout += data.toString();
+    });
+    childprocess.stderr.on('data', data => {
+      stderr += data.toString();
+    });
+    childprocess.on('close', code => {
+      if(code != 0)
+        reject(new Error("FASTLIST THROUGH THE FOLLOWING ERRORS: ", stderr, "\nExit with code ", code));
+      else{
+        resolve(stdout);
+      }
+    });
+  });
+
+	return fullstdout
+		.trim()
+		.split('\r\n')
+		.map(line => line.split('\t'))
+		.map(([name, pid, ppid]) => ({
+			name,
+			pid: Number.parseInt(pid, 10),
+			ppid: Number.parseInt(ppid, 10)
+		}));
+};
+
 exports.loadStateFile = loadStateFile;
 exports.netstat = netstat;
+exports.fastlist = fastlist
