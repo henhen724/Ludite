@@ -58,6 +58,7 @@
   "dependencies": {
     "ffi-napi": "^2.4.5",
     "forever": "^1.0.0",
+    "forever-monitor": "^1.7.1",
     "iconv": "^2.3.5",
     "nan": "^2.14.0",
     "npm": "^6.13.1",

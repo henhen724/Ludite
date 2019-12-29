@@ -2,7 +2,7 @@
 
 // Import parts of electron to use
 const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
-const fileIpc = require("node-ipc");
+const forever = require('forever-monitor');
 const { workerId, workerMsg, awakeMsg } = require("./service/config");
 const path = require("path");
 const url = require("url");

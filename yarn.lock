@@ -3334,7 +3334,7 @@ forever-agent@~0.6.1:
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
   integrity sha1-+8cfDEGt6zf5bFd60e1C2P2sypE=
 
-forever-monitor@~1.7.0:
+forever-monitor@^1.7.1, forever-monitor@~1.7.0:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/forever-monitor/-/forever-monitor-1.7.1.tgz#5d820f4a3a78db2d81ae2671f158b9e86a091bb8"
   integrity sha1-XYIPSjp42y2BriZx8Vi56GoJG7g=
