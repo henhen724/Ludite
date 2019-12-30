@@ -17,7 +17,7 @@ loadStateFile = () => {
       dataStr = data.toString();
       try {
         const stateObj = JSON.parse(dataStr);
-        console.log(stateObj);
+        // console.log(stateObj);
         resolve(stateObj)
       } catch (err) {
         console.log("Error: ", err)
@@ -231,6 +231,7 @@ const fastlist = async () => {
 			ppid: Number.parseInt(ppid, 10)
 		}));
 };
+// END OF FASTLIST DEF
 
 exports.loadStateFile = loadStateFile;
 exports.netstat = netstat;

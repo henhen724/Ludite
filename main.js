@@ -1,6 +1,5 @@
 "using strict"
 
-// Import parts of electron to use
 const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
 const forever = require('forever-monitor');
 const { workerId, workerMsg, awakeMsg } = require("./service/config");
@@ -15,7 +14,7 @@ const {
   REQUEST_STATE
 } = require("./src/actions/types");
 const { PATH: statefilepath } = require("./config/statefilepath");
-const { loadStateFile } = require("./config/util");
+const { loadStateFile, foreverlist } = require("./config/util");
 const defaultState = require("./config/defaultstate");
 const fs = require("fs");
 
@@ -60,40 +59,40 @@ if (
   });
 }
 
-
-fileIpc.config.retry = 1;
-fileIpc.config.stopRetrying = true;
-let randNum = Math.random();
-let connect = false;
-
-function connectToWorker() {
-  fileIpc.connectTo(workerId, () => {
-    fileIpc.of[workerId].on('connect', () => {
-      console.log("Connected to worker.");
-    })
+const performJsonActionOnFile = func => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(statefilepath, "utf8", (err, data) => {
+      if (err) reject(err);
+      var stateObject = JSON.parse(data);
+      stateObject = func(stateObject);
+      console.log(stateObject);
+      fs.writeFile(statefilepath, JSON.stringify(stateObject), "utf8", err => {
+        if (err) reject(err);
+        console.log("Successfully saved.");
+        resolve({ msg: 'Success' });
+      });
+    });
   });
-}
-connectToWorker();
+};
 
-async function startHiddenService() {
-  var connected = false;
-  const randNum = Math.random();
-  fileIpc.of[workerId].on(workerMsg, data => {
-    console.log("Connected with ", workerMsg, " seed: ", data);
-    if(data === randNum)
-      connected = true;
-  });
-  fileIpc.of[workerId].emit(awakeMsg, randNum);
-  setTimeout(() => {
-      if(!connected)
+const startHiddenService = async () => {
+  const start = Date.now();
+  performJsonActionOnFile(stateObj => {
+    stateObj.msg = awakeMsg;
+    return stateObj;
+  }).then(() => {
+    const interval = Date.now() - start;
+    setTimeout(() => {
+      if(stateObj.msg !== workerMsg)
       {
-        spawn("node",  [path.join(__dirname, '/service/worker.js')]);
-        console.log("spawning worker.");
-        setTimeout(connectToWorker, 500);
+        const child = new (forever.Monitor)(path.join(__dirname, "service", "worker.js"), {max: 1, uid: workerId, outFile: './service/worker.log'});
+        child.on('exit:code', code => {
+          console.error("Worker exited with code: " + code);
+        });
+        child.start();
       }
-      else
-        console.log("Worker found: ", connected);
-    }, 500);
+    }, 5*interval);
+  })
 }
 
 function createWindow() {
@@ -152,7 +151,12 @@ if (process.argv.indexOf("--hidden") === -1)
     createWindow();
     startHiddenService();
   });
-else app.on("ready", startHiddenService);
+else {
+  app.on("ready", () => {
+    startHiddenService();
+    process.exit(0);
+  });
+}
 
 // Quit when all windows are closed.
 app.on("window-all-closed", () => {
@@ -162,6 +166,7 @@ app.on("window-all-closed", () => {
   //   app.quit();
   // }
   startHiddenService();
+  process.exit(0);
 });
 
 app.on("activate", () => {
@@ -212,19 +217,6 @@ ipc.on(REQUEST_STATE, (event, arg) => {
     event.sender.send(RECEIVED_STATE, JSON.parse(data));
   });
 });
-
-const performJsonActionOnFile = func => {
-  fs.readFile(statefilepath, "utf8", (err, data) => {
-    if (err) throw err;
-    var stateObject = JSON.parse(data);
-    stateObject = func(stateObject);
-    console.log(stateObject);
-    fs.writeFile(statefilepath, JSON.stringify(stateObject), "utf8", err => {
-      if (err) throw err;
-      console.log("Successfully saved.");
-    });
-  });
-};
 
 ipc.on(ADD_URL, (event, arg) => {
   console.log("A url was added", arg);

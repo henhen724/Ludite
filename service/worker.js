@@ -4,6 +4,7 @@ const psList = require("ps-list");
 const defaultState = require("../config/defaultstate");
 const { PATH: statefilepath } = require("../config/statefilepath");
 const { loadStateFile, netstat, fastlist } = require("../config/util");
+const { awakeMsg, workerMsg } = require("./config");
 const dns = require("dns");
 
 //USE NODEMAILER TO SEND EMAIL
@@ -44,10 +45,27 @@ saveState = () => {
   })
 }
 
+loadStateFile().then(data => {
+  stateObj = data;
+  if(stateObj.msg === awakeMsg)
+  {
+        stateObj.msg = workerMsg;
+        console.log("Awake recieved.");
+        saveState();
+  }
+  setBlockIPs();
+}).catch(error => console.log(error));
+
 try {
   fs.watch(statefilepath, (eventType, filename) => {
     loadStateFile().then(data => {
       stateObj = data;
+      if(stateObj.msg === awakeMsg)
+      {
+        stateObj.msg = workerMsg;
+        console.log("Awake recieved.");
+        saveState();
+      }
       setBlockIPs();
     }).catch(error => console.log(error));
   })
@@ -77,7 +95,7 @@ findWindows = async () => {
       appProsDict[currentApp].forEach(pid => {
         if (typeof prosConnDict[pid] !== 'undefined')
         {
-          console.log("Checking\n", prosConnDict[pid], "\n\nAgainst\n", blockIP2Dns)
+          // console.log("Checking\n", prosConnDict[pid], "\n\nAgainst\n", blockIP2Dns)
           prosConnDict[pid].forEach(addrtime => {
             if(typeof blockIP2Dns[addrtime.address] !== 'undefined')
             {
@@ -102,7 +120,7 @@ const updateProsConnDict = () => {
     itemlist.forEach(item => {
       if(!item)
         return;
-      if (!isNaN(item.remote.port) && item.remote.address != null && item.remote.address != '127.0.0.1') {
+      if (item.state === 'ESTABLISHED' && !isNaN(item.remote.port) && item.remote.address != null && item.remote.address != '127.0.0.1') {
         if (prosConnDict[item.pid] === undefined)
           prosConnDict[item.pid] = []
         prevConn = prosConnDict[item.pid].find(addrtime => addrtime.address === item.remote.address)
@@ -165,10 +183,10 @@ removeTimeoutConn = async () => {
 
 printInfo = async () => {
   //console.clear();
-  console.log("Open Connections:");
-  console.table(Object.keys(prosConnDict).map((pid, index) => { return { 'pid': pid, 'address': prosConnDict[pid].map(addrtime => addrtime.address) }; }));
-  console.log("App Process Dictionary:");
-  console.table(Object.keys(appProsDict).map((app, index) => { return { 'Application': app, 'processes': appProsDict[app] } }));
+  // console.log("Open Connections:");
+  // console.table(Object.keys(prosConnDict).map((pid, index) => { return { 'pid': pid, 'address': prosConnDict[pid].map(addrtime => addrtime.address) }; }));
+  // console.log("App Process Dictionary:");
+  // console.table(Object.keys(appProsDict).map((app, index) => { return { 'Application': app, 'processes': appProsDict[app] } }));
   if (typeof currentApp !== 'undefined' && typeof appProsDict[currentApp] !== 'undefined') {
     console.log("Current Highlighted App: ", currentApp);
     console.log("Process Assosiated: ", appProsDict[currentApp]);
@@ -180,11 +198,6 @@ printInfo = async () => {
   }
   setTimeout(printInfo, 3000);
 }
-
-loadStateFile().then(data => {
-  stateObj = data;
-  setBlockIPs();
-}).catch(error => console.log(error));
 
 //Start 3 async threads
 updateProcessTable();
