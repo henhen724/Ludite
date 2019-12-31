@@ -87,7 +87,15 @@ catch (err) {
 //Find current window and set worker state
 findWindows = async () => {
   window = await activeWin();
+  if(typeof window === 'undefined')
+    return setTimeout(findWindows, 500);
   // console.log(window);
+  if(process.platform === 'darwin')
+  {
+    const possiblename = window.owner.path.split("/").find(dir => dir.split('.app').length > 1);
+    if(typeof possiblename !== 'undefined')
+      window.owner.name = window.owner.path.split("/").find(dir => dir.split('.app').length > 1).split(".app")[0]
+  }
   if (window != null && appProsDict[window.owner.name] != null) {
     if(currentApp !== window.owner.name)
     {
@@ -155,12 +163,20 @@ updateProcessTable = async () => {
   if(process.platform === 'win32')
     processTable = await fastlist();
   else
+  {
     processTable = await psList();
+  }
   // console.log(processTable);
   if (typeof processTable === 'undefined' || processTable === null)
     return setTimeout(updateProcessTable, 1000)
   newAppProsDict = {}
   processTable.forEach(entry => {
+    if(process.platform === 'darwin')
+    {
+      const possiblename = entry.cmd.split("/").find(dir => dir.split('.app').length > 1);
+      if(typeof possiblename !== 'undefined')
+        entry.name = entry.cmd.split("/").find(dir => dir.split('.app').length > 1).split(".app")[0]
+    }
     if (newAppProsDict[entry.name] === undefined)
       newAppProsDict[entry.name] = [];
     newAppProsDict[entry.name].push(entry.pid);
@@ -183,10 +199,10 @@ removeTimeoutConn = async () => {
 
 printInfo = async () => {
   //console.clear();
-  // console.log("Open Connections:");
-  // console.table(Object.keys(prosConnDict).map((pid, index) => { return { 'pid': pid, 'address': prosConnDict[pid].map(addrtime => addrtime.address) }; }));
-  // console.log("App Process Dictionary:");
-  // console.table(Object.keys(appProsDict).map((app, index) => { return { 'Application': app, 'processes': appProsDict[app] } }));
+  console.log("Open Connections:");
+  console.table(Object.keys(prosConnDict).map((pid, index) => { return { 'pid': pid, 'address': prosConnDict[pid].map(addrtime => addrtime.address) }; }));
+  console.log("App Process Dictionary:");
+  console.table(Object.keys(appProsDict).map((app, index) => { return { 'Application': app, 'processes': appProsDict[app] } }));
   if (typeof currentApp !== 'undefined' && typeof appProsDict[currentApp] !== 'undefined') {
     console.log("Current Highlighted App: ", currentApp);
     console.log("Process Assosiated: ", appProsDict[currentApp]);
