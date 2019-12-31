@@ -103,7 +103,7 @@ const performJsonActionOnFile = func => {
         fs.writeFile(statefilepath, JSON.stringify(stateObject), "utf8", err => {
           if (err) reject(err);
           console.log("Successfully saved.");
-          resolve({ msg: 'Success' });
+          resolve(stateObject);
         });
       } catch(err) {
         console.log(err);
@@ -121,14 +121,16 @@ const startHiddenService = async () => {
   }).then(() => {
     const interval = Date.now() - start;
     setTimeout(() => {
-      if(stateObj.msg !== workerMsg)
-      {
-        const child = new (forever.Monitor)(path.join(__dirname, "service", "worker.js"), {max: 1, uid: workerId, outFile: './service/worker.log'});
-        child.on('exit:code', code => {
-          console.error("Worker exited with code: " + code);
-        });
-        child.start();
+      loadStateFile().then(stateObj => {
+        if(stateObj.msg !== workerMsg)
+        {
+          const child = new (forever.Monitor)(path.join(__dirname, "service", "worker.js"), {max: 1, uid: workerId, outFile: './service/worker.log'});
+          child.on('exit:code', code => {
+            console.error("Worker exited with code: " + code);
+          });
+          child.start();
       }
+      })
     }, 5*interval);
   })
 }
