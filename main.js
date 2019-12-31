@@ -5,7 +5,6 @@ const forever = require('forever-monitor');
 const { workerId, workerMsg, awakeMsg } = require("./service/config");
 const path = require("path");
 const url = require("url");
-const { spawn } = require("child_process");
 const {
   ADD_URL,
   DELETE_URL,
@@ -17,6 +16,40 @@ const { PATH: statefilepath } = require("./config/statefilepath");
 const { loadStateFile, foreverlist } = require("./config/util");
 const defaultState = require("./config/defaultstate");
 const fs = require("fs");
+
+//Write default state to the state file (Used when statefile is missing or otherwise corrupted)
+writeDefaultState = () => {
+  fs.writeFile(statefilepath, JSON.stringify(defaultState), err => {
+    if (err) {
+      console.log("Unable to write file.");
+      throw err;
+    }
+  });
+}
+
+//Load/create statefile and watch for changes made by the worker
+loadStateFile().then(data => {
+  stateObj = data;
+}).catch(err => {
+  console.log(err);
+  writeDefaultState();
+});
+
+try {
+  fs.watch(statefilepath, (eventType, filename) => {
+    console.log(eventType);
+    loadStateFile().then(data => {
+      stateObj = data;
+      if(typeof mainWindow !== 'undefined' && mainWindow !== null)
+        mainWindow.webContents.send(RECEIVED_STATE, stateObj);
+    }).catch(error => console.log(error));
+  })
+}
+catch (err) {
+  console.log(err);
+  if(err.code === 'ENOENT')
+    writeDefaultState();
+}
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -63,14 +96,19 @@ const performJsonActionOnFile = func => {
   return new Promise((resolve, reject) => {
     fs.readFile(statefilepath, "utf8", (err, data) => {
       if (err) reject(err);
-      var stateObject = JSON.parse(data);
-      stateObject = func(stateObject);
-      console.log(stateObject);
-      fs.writeFile(statefilepath, JSON.stringify(stateObject), "utf8", err => {
-        if (err) reject(err);
-        console.log("Successfully saved.");
-        resolve({ msg: 'Success' });
-      });
+      try{
+        var stateObject = JSON.parse(data);
+        stateObject = func(stateObject);
+        console.log(stateObject);
+        fs.writeFile(statefilepath, JSON.stringify(stateObject), "utf8", err => {
+          if (err) reject(err);
+          console.log("Successfully saved.");
+          resolve({ msg: 'Success' });
+        });
+      } catch(err) {
+        console.log(err);
+        setTimeout(() => performJsonActionOnFile(func).then(rslt => resolve(rslt)), 500);
+      }
     });
   });
 };
@@ -101,7 +139,8 @@ function createWindow() {
     width: 1024,
     height: 768,
     show: false,
-    webPreferences: { nodeIntegration: true }
+    webPreferences: { nodeIntegration: true },
+    icon: path.join(__dirname, "public", "favicon.ico")
   });
 
   const mainMenu = Menu.buildFromTemplate(mainMenuTemplate);
@@ -179,36 +218,8 @@ app.on("activate", () => {
 
 const buf = Buffer.alloc(256);
 
-writeDefaultState = () => {
-  fs.writeFile(statefilepath, JSON.stringify(defaultState), err => {
-    if (err) {
-      console.log("Unable to write file.");
-      throw err;
-    }
-  });
-}
-
 //IPC event functions which write input from the render thread to file
 
-
-try {
-  fs.watch(statefilepath, (eventType, filename) => {
-    console.log(eventType);
-    loadStateFile().then(data => {
-      stateObj = data;
-      if(typeof mainWindow !== 'undefined' && mainWindow !== null)
-        mainWindow.webContents.send(RECEIVED_STATE, stateObj);
-    }).catch(error => console.log(error));
-  })
-}
-catch (err) {
-  console.log(err);
-  writeDefaultState();
-}
-
-loadStateFile().then(data => {
-  stateObj = data;
-}).catch(error => console.log(error));
 
 ipc.on(REQUEST_STATE, (event, arg) => {
   fs.readFile(statefilepath, "utf8", (err, data) => {

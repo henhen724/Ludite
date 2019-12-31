@@ -14,14 +14,13 @@ loadStateFile = () => {
           error: err
         })
       }
-      dataStr = data.toString();
       try {
+        dataStr = data.toString();
         const stateObj = JSON.parse(dataStr);
         // console.log(stateObj);
         resolve(stateObj)
       } catch (err) {
         console.log("Error: ", err)
-        console.log("JSON parse failed.\nString: ", dataStr);
         console.log("Buffer ", data);
         reject({
           msg: 'An error occured while parsing the file.',
