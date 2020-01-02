@@ -25,6 +25,7 @@ export const deleteUrl = id => dispatch => {
 };
 
 export const editUrl = (id, dns, maxvisits) => dispatch => {
+  maxvisits = maxvisits < 1 ? 0 : maxvisits;
   ipc.send(EDIT_URL, { id: id, dns: dns, maxvisits: maxvisits });
   dispatch({
     type: EDIT_URL,

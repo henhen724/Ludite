@@ -2,6 +2,8 @@ import {
   ADD_URL,
   DELETE_URL,
   EDIT_URL,
+  EDIT_USR,
+  EDIT_REF,
   CHANGE_PAGE,
   RECEIVED_STATE
 } from "../actions/types";
@@ -32,6 +34,16 @@ const rootReducer = (state, action) => {
           return aUrl;
         })
       };
+    case EDIT_USR:
+      return {
+        ...state,
+        user_email: action.email
+      }
+    case EDIT_REF:
+      return {
+        ...state,
+        ref_email: action.email
+      }
     case CHANGE_PAGE:
       return {
         ...state,

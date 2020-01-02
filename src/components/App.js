@@ -27,7 +27,7 @@ class App extends Component {
     }
     return (
       <Paper className="App" style={{ backgroundColor: "#09d3ac" }}>
-        <Card style={{ backgroundColor: "#00e6e6" }}>Ludite</Card>
+        <Card style={{ backgroundColor: "#00e6e6", height: '32px', fontSize: 24 }}><b>Ludite</b></Card>
         <Tabs value={this.props.currentPageNum} centered>
           <Tab label="Setup" onClick={this.tabClicked(0)} id="simiple-tabs-1" />
           <Tab label="Usage" onClick={this.tabClicked(1)} id="simiple-tabs-2" />

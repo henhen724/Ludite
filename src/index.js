@@ -22,7 +22,15 @@ const store = createStore(
 
 ipc.on(RECEIVED_STATE, arg => {
   console.log("Recieved State: ", arg);
-  onUpdate(arg)(store.dispatch);
+  var visitChange = false;
+  const curState = store.getState();
+  if(typeof arg.block_urls !== 'undefined')
+    arg.block_urls.forEach(url, index => {
+      if(url.visits !== curState.block_urls[index].visits)
+        visitChange = true;
+    });
+  if(arg.length !== curState.length || visitChange)
+    onUpdate(arg)(store.dispatch);
 })
 
 // Now we can render our application into it

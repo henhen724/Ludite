@@ -9,6 +9,10 @@ const {
   ADD_URL,
   DELETE_URL,
   EDIT_URL,
+  EDIT_USR,
+  EDIT_REF,
+  EDIT_STR,
+  EDIT_END,
   RECEIVED_STATE,
   REQUEST_STATE
 } = require("./src/actions/types");
@@ -140,6 +144,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1024,
     height: 768,
+    backgroundColor: '#574c4f',
+    titleBarStyle: 'hiddenInset',
     show: false,
     webPreferences: { nodeIntegration: true },
     icon: path.join(__dirname, "public", "favicon.ico")
@@ -257,5 +263,37 @@ ipc.on(EDIT_URL, (event, arg) => {
       return url;
     });
     return stateObj
+  });
+});
+
+ipc.on(EDIT_STR, (event, arg) => {
+  console.log("The start time was changed", arg);
+  performJsonActionOnFile(stateObj => {
+    stateObj.start_time = arg
+    return stateObj
+  });
+});
+
+ipc.on(EDIT_END, (event, arg) => {
+  console.log("A url was edit", arg);
+  performJsonActionOnFile(stateObj => {
+    stateObj.end_time = arg
+    return stateObj
+  });
+});
+
+ipc.on(EDIT_USR, (event, arg) => {
+  console.log("A user email changed", arg);
+  performJsonActionOnFile(stateObj => {
+    stateObj.user_email = arg;
+    return stateObj;
+  });
+});
+
+ipc.on(EDIT_REF, (event, arg) => {
+  console.log("A url was edit", arg);
+  performJsonActionOnFile(stateObj => {
+    stateObj.ref_email = arg;
+    return stateObj;
   });
 });

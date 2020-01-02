@@ -21,7 +21,14 @@ setBlockIPs = () => {
     dns.resolve(urlObj.dns, (err, addresses) => {
       if(err)
       {
-        console.error("Error: ", err);
+        if(err.code === 'ENODATA')
+          stateObj.block_urls = stateObj.block_urls.map(urlObj2 => {
+            if(urlObj2.dns === urlObj.dns)
+              urlObj2.error = 'The url you gave isn\'t invalid.'
+            return urlObj2
+          });
+        else
+          console.error("Error: ", err);
       }
       else
       {
@@ -220,4 +227,4 @@ updateProcessTable();
 updateProsConnDict();
 removeTimeoutConn();
 findWindows();
-printInfo();
+// printInfo();
