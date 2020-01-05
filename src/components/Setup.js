@@ -18,9 +18,13 @@ import { editStartTime, editEndTime } from "../actions/timeActions";
 
 class Setup extends Component {
   dnsChange = id => e => {
+    e.preventDefault();
     this.props.editUrl(id, e.target.value, null);
   };
-  maxvisitsChange = id => e => this.props.editUrl(id, null, e.target.value);
+  maxvisitsChange = id => e => {
+    e.preventDefault();
+    this.props.editUrl(id, null, e.target.value);
+  }
   deleteClick = id => () => this.props.deleteUrl(id);
   userChange = e => {
     e.preventDefault();
@@ -43,7 +47,7 @@ class Setup extends Component {
   render() {
     return (
       <div>
-        <Card style={{backgroundColor: '#574c4f'}}>
+        <Card>
           <Grid container p={2} spacing={1} alignContent="center">
             <Grid item xs={6}>
               <TextField 
@@ -66,10 +70,10 @@ class Setup extends Component {
           </Grid>
           <Grid container spacing={1} alignContent="center">
             <Grid item xs={6}>
-              <TextField type="time" label="Start Time" defaultValue={this.props.start_time} onChange={this.startChange}/>
+              <TextField type="time" label="Start Time" value={this.props.start_time} onChange={this.startChange}/>
             </Grid>
             <Grid item xs={6}>
-              <TextField type="time" label="End Time" defaultValue={this.props.start_time} onChange={this.endChange}/>
+              <TextField type="time" label="End Time" value={this.props.end_time} onChange={this.endChange}/>
             </Grid>
           </Grid>
         </Card>

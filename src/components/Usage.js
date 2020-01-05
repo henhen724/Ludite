@@ -17,14 +17,26 @@ class Usage extends Component {
         <Paper>
           <Table>
             <TableHead>
-              {this.props.block_urls.map(aUrl => (
-                <TableRow key={aUrl.id}>
-                  <TableCell>{aUrl.dns}</TableCell>
-                  <TableCell>
-                    {aUrl.visits}/{aUrl.maxvisits}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {this.props.block_urls.map(aUrl => {
+                if(aUrl.maxvisits === 0)
+                {
+                  return (<TableRow key={aUrl.id}>
+                    <TableCell>{aUrl.dns}</TableCell>
+                    <TableCell>
+                      Untracked (Set visit limit to track)
+                    </TableCell>
+                  </TableRow>)
+                }
+                else
+                {
+                  return (<TableRow key={aUrl.id}>
+                    <TableCell>{aUrl.dns}</TableCell>
+                    <TableCell>
+                      {aUrl.visits}/{aUrl.maxvisits}
+                    </TableCell>
+                  </TableRow>)
+                }
+              })}
             </TableHead>
           </Table>
         </Paper>

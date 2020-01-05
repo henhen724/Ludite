@@ -1,10 +1,10 @@
-import { EDIT_SRT, EDIT_END } from "./types";
+import { EDIT_STR, EDIT_END } from "./types";
 import { ipcRenderer as ipc } from "electron";
 
 export const editStartTime = time => dispatch => {
-    ipc.send(EDIT_SRT, time);
+    ipc.send(EDIT_STR, time);
     dispatch({
-        type: EDIT_SRT,
+        type: EDIT_STR,
         time: time
     });
 }

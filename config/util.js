@@ -2,9 +2,11 @@ const path = require("path");
 const { PATH: statefilepath } = require('./statefilepath');
 const fs = require("fs");
 const { spawn } = require("child_process");
+const defaultemail = require("./defaultemail");
+const nodemailer = require("nodemailer");
 
 //JSON FILE LOAD
-loadStateFile = () => {
+const loadStateFile = () => {
   return new Promise((resolve, reject) => {
     fs.readFile(statefilepath, (err, data) => {
       if (err) {
@@ -29,6 +31,81 @@ loadStateFile = () => {
       }
     })
   })
+}
+const _now = () => {
+  const nowTimeObj = new Date();
+  var newDayTime = new DayTime();
+  newDayTime.hours = nowTimeObj.getHours();
+  newDayTime.mins =  nowTimeObj.getMinutes();
+  return newDayTime;
+}
+
+// Simiple class which stores the time which of date and defines comperation operators
+class DayTime {
+  constructor(_hours, _mins){
+    this.hours = _hours;
+    this.mins = _mins;
+  }
+  earlierThan(time){
+    return this.hours < time.hours || (this.hours === time.hours && this.mins < time.mins);
+  }
+  sameTime(time){
+    return this.hours === time.hours && this.mins === time.mins;
+  }
+  laterThan(time){
+    return !this.earlierThan(time) && !this.sameTime(time);
+  }
+}
+
+// Test weather current time against interval.
+const _parseTimeStr = time => {
+  const timeArr = time.split(":").map(str => Number(str));
+  return new DayTime(timeArr[0], timeArr[1]);
+}
+const duringInterval = (start, end) => {
+  const startT = _parseTimeStr(start);
+  const endT = _parseTimeStr(end);
+  const nowT = _now();
+  if(startT.earlierThan(endT) || startT.sameTime(endT)) //Check weather start time is before the end time, indicating the start and end time are during the same day
+  {
+    return (startT.earlierThan(nowT) || startT.sameTime(nowT)) && (endT.laterThan(nowT) || endT.sameTime(nowT));
+  }
+  else //Start is later than end meaning that start is in the previous day
+  {
+    return (endT.laterThan(nowT) || endT.sameTime(nowT)) || (startT.earlierThan(nowT) || startT.sameTime(nowT));
+  }
+}
+
+// SEND EMAIL
+
+const sendEmail = async (site, user_email, ref_email) => {
+  let testAccount = await nodemailer.createTestAccount();
+
+  let transporter = nodemailer.createTransport({
+    host: "smtp.ethereal.email",
+    port: 506,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: testAccount.user, // generated ethereal user
+      pass: testAccount.pass // generated ethereal password
+    }
+  });
+
+  let info = await transporter.sendMail({
+    from: user_email, // sender address
+    to: ref_email, // list of receivers
+    subject: "Hello ✔", // Subject line
+    text: "Hello world?", // plain text body
+    html: "<b>Hello world?</b>" // html body
+  });
+
+  console.log("Message sent: %s", info.messageId);
+  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
+
+  // Preview only available when sending through an Ethereal account
+  console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+  // Preview URL: https://ethereal.email/message/WaQKMgKddxQDoou...
+
 }
 
 // NETSTAT JS WRAPER
@@ -234,4 +311,6 @@ const fastlist = async () => {
 
 exports.loadStateFile = loadStateFile;
 exports.netstat = netstat;
-exports.fastlist = fastlist
+exports.fastlist = fastlist;
+exports.duringInterval = duringInterval;
+exports.sendEmail = sendEmail;

@@ -3,6 +3,8 @@ import {
   DELETE_URL,
   EDIT_URL,
   EDIT_USR,
+  EDIT_STR,
+  EDIT_END,
   EDIT_REF,
   CHANGE_PAGE,
   RECEIVED_STATE
@@ -43,6 +45,16 @@ const rootReducer = (state, action) => {
       return {
         ...state,
         ref_email: action.email
+      }
+    case EDIT_STR:
+      return {
+        ...state,
+        start_time: action.time
+      }
+    case EDIT_END:
+      return {
+        ...state,
+        end_time: action.time
       }
     case CHANGE_PAGE:
       return {

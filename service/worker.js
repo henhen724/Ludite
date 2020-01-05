@@ -3,7 +3,7 @@ const fs = require("fs");
 const psList = require("ps-list");
 const defaultState = require("../config/defaultstate");
 const { PATH: statefilepath } = require("../config/statefilepath");
-const { loadStateFile, netstat, fastlist } = require("../config/util");
+const { loadStateFile, netstat, fastlist, duringInterval, sendEmail } = require("../config/util");
 const { awakeMsg, workerMsg } = require("./config");
 const dns = require("dns");
 
@@ -112,11 +112,16 @@ findWindows = async () => {
         {
           // console.log("Checking\n", prosConnDict[pid], "\n\nAgainst\n", blockIP2Dns)
           prosConnDict[pid].forEach(addrtime => {
-            if(typeof blockIP2Dns[addrtime.address] !== 'undefined')
+            if(typeof blockIP2Dns[addrtime.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time))
             {
+              console.log("Added site based on window highlight")
               stateObj.block_urls = stateObj.block_urls.map(urlObj => {
                 if (urlObj.dns === blockIP2Dns[addrtime.address])
+                {
                   urlObj.visits += 1;
+                  if(urlObj.visits >= urlObj.maxvisits)
+                    sendEmail(urlObj.dns, stateObj.user_email, stateObj.ref_email);
+                }
                 return urlObj;
               })
               saveState();
@@ -142,11 +147,14 @@ const updateProsConnDict = () => {
         if (typeof prevConn === 'undefined' || prevConn === null)
         {
           prosConnDict[item.pid].push({ address: item.remote.address, time: Date.now() });
-          if(typeof blockIP2Dns[item.remote.address] !== 'undefined')
+          if(typeof blockIP2Dns[item.remote.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time))
           {
+            console.log("Adding site from connection.");
             stateObj.block_urls = stateObj.block_urls.map(urlObj => {
               if (urlObj.dns === blockIP2Dns[item.remote.address])
                 urlObj.visits += 1;
+                if(urlObj.visits >= urlObj.maxvisits)
+                    sendEmail(urlObj.dns, stateObj.user_email, stateObj.ref_email);
               return urlObj;
             })
             saveState();
@@ -186,7 +194,7 @@ updateProcessTable = async () => {
     }
     if (newAppProsDict[entry.name] === undefined)
       newAppProsDict[entry.name] = [];
-    newAppProsDict[entry.name].push(entry.pid);
+    newAppProsDict[entry.name].push(entry.pid); 
   })
   appProsDict = newAppProsDict;
   setTimeout(updateProcessTable, 1000);
@@ -197,7 +205,7 @@ removeTimeoutConn = async () => {
   if (prosToSearch === [] || prosToSearch === undefined)
     setTimeout(removeTimeoutConn, 500);
   prosToSearch.forEach(pid => {
-    prosConnDict[pid] = prosConnDict[pid].filter(addrtime => Date.now() - addrtime.time < 10000);
+    prosConnDict[pid] = prosConnDict[pid].filter(addrtime => Date.now() - addrtime.time < 1000);
     if (prosConnDict[pid].length === 0)
       delete prosConnDict[pid];
   });

@@ -1,12 +1,47 @@
+// Importing React and Redux
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
+// Importing styleing
 import "../assets/css/App.css";
+import { createMuiTheme, makeStyles, ThemeProvider } from "@material-ui/core/styles";
+// Import material components
+import { Card, Tabs, Tab, Paper } from "@material-ui/core";
+// Import other components we've written
 import Setup from "./Setup";
 import Usage from "./Usage";
-import { Card, Tabs, Tab, Paper } from "@material-ui/core";
+// Import "actions" - functions which change the app wide state
 import { gotoPage } from "../actions/pageActions";
 import { getState } from "../actions/startUpActions";
+
+// Define Style
+const useStyle = makeStyles(theme => {
+  // Write css
+})
+
+const theme = createMuiTheme({
+  palette: {
+    type: 'dark',
+    primary: {
+      main: '#78b0a0',
+      contrastText: '#78b0a0',
+    },
+    secondary: {
+      light: '#ffe066',
+      main: '#ff4400',
+      dark: '#574c4f',
+      contrastText: '#efdab9',
+    },
+    text: {
+        primary: '#ccb591',
+        secondary: '#efdab9',
+        info: '#78b0a0',
+    },
+    info:{
+      main: '#574c4f',
+    }
+  }
+});
 
 class App extends Component {
   componentDidMount() {
@@ -26,15 +61,16 @@ class App extends Component {
         currentPage = <Setup />;
     }
     return (
-      <Paper className="App" style={{ backgroundColor: "#09d3ac" }}>
-        <Card style={{ backgroundColor: "#00e6e6", height: '32px', fontSize: 24 }}><b>Ludite</b></Card>
+      <ThemeProvider theme={theme}>
+        <Card color='info' style={{ height: '32px', fontSize: 24 }}><b>Ludite</b></Card>
+        <Paper style={{height: '45hw'}}>
         <Tabs value={this.props.currentPageNum} centered>
           <Tab label="Setup" onClick={this.tabClicked(0)} id="simiple-tabs-1" />
           <Tab label="Usage" onClick={this.tabClicked(1)} id="simiple-tabs-2" />
-          <Tab label="Edit" onClick={this.tabClicked(2)} id="simiple-tabs-3" />
         </Tabs>
         {currentPage}
-      </Paper>
+        </Paper>
+      </ThemeProvider>
     );
   }
 }
@@ -51,4 +87,4 @@ const mapStateToProps = state => {
   };
 };
 
-export default connect(mapStateToProps, { gotoPage, getState })(App); //connect(mapStateToProps, { gotoPage })(App);
+export default connect(mapStateToProps, { gotoPage, getState })(App);

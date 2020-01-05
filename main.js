@@ -275,7 +275,7 @@ ipc.on(EDIT_STR, (event, arg) => {
 });
 
 ipc.on(EDIT_END, (event, arg) => {
-  console.log("A url was edit", arg);
+  console.log("The end time was changed", arg);
   performJsonActionOnFile(stateObj => {
     stateObj.end_time = arg
     return stateObj
