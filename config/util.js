@@ -83,7 +83,7 @@ const sendEmail = async (site, user_email, ref_email) => {
 
   let transporter = nodemailer.createTransport({
     host: "smtp.ethereal.email",
-    port: 506,
+    port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
       user: testAccount.user, // generated ethereal user
