@@ -37,7 +37,7 @@ class Setup extends Component {
   startChange = e => {
     e.preventDefault();
     this.props.editStartTime(e.target.value);
-  
+
   }
   endChange = e => {
     e.preventDefault();
@@ -50,12 +50,12 @@ class Setup extends Component {
         <Card>
           <Grid container p={2} spacing={1} alignContent="center">
             <Grid item xs={6}>
-              <TextField 
-              type="text"
-              id="userEmail"
-              label="Your Email"
-              value={this.props.user_email}
-              onChange={this.userChange}
+              <TextField
+                type="text"
+                id="userEmail"
+                label="Your Email"
+                value={this.props.user_email}
+                onChange={this.userChange}
               />
             </Grid>
             <Grid item xs={6}>
@@ -70,36 +70,36 @@ class Setup extends Component {
           </Grid>
           <Grid container spacing={1} alignContent="center">
             <Grid item xs={6}>
-              <TextField type="time" label="Start Time" value={this.props.start_time} onChange={this.startChange}/>
+              <TextField type="time" label="Start Time" value={this.props.start_time} onChange={this.startChange} />
             </Grid>
             <Grid item xs={6}>
-              <TextField type="time" label="End Time" value={this.props.end_time} onChange={this.endChange}/>
+              <TextField type="time" label="End Time" value={this.props.end_time} onChange={this.endChange} />
             </Grid>
           </Grid>
         </Card>
         <Button onClick={this.props.addUrl}>
           <AddCircle />
         </Button>
-          <GridList cellHeight={70}>
-            {this.props.block_urls.map(aUrl => (
-              <GridListTile key={aUrl.id} lg={6}>
-                <TextField
-                  label='An unproductive site'
-                  value={aUrl.dns}
-                  onChange={this.dnsChange(aUrl.id)}
-                />
-                <TextField
-                  label='Visit Limit'
-                  value={aUrl.maxvisits < 1 ? undefined : aUrl.maxvisits}
-                  type='number'
-                  onChange={this.maxvisitsChange(aUrl.id)}
-                />
-                <Button onClick={this.deleteClick(aUrl.id)}>
-                  <Delete />
-                </Button>
-              </GridListTile>
-            ))}
-          </GridList>
+        <GridList cellHeight={70}>
+          {this.props.block_urls.map(aUrl => (
+            <GridListTile key={aUrl.id} lg={6}>
+              <TextField
+                label='An unproductive site'
+                value={aUrl.dns}
+                onChange={this.dnsChange(aUrl.id)}
+              />
+              <TextField
+                label='Visit Limit'
+                value={aUrl.maxvisits < 1 ? '' : aUrl.maxvisits}
+                type='number'
+                onChange={this.maxvisitsChange(aUrl.id)}
+              />
+              <Button onClick={this.deleteClick(aUrl.id)}>
+                <Delete />
+              </Button>
+            </GridListTile>
+          ))}
+        </GridList>
       </div>
     );
   }
