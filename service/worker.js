@@ -17,21 +17,21 @@ var stateObj = defaultState
 
 setBlockIPs = () => {
   // console.log(dns.getServers());
+  if (typeof stateObj.block_urls === 'undefined')
+    return setTimeout(setBlockIPs, 10000)
   stateObj.block_urls.forEach(urlObj => {
     dns.resolve(urlObj.dns, (err, addresses) => {
-      if(err)
-      {
-        if(err.code === 'ENODATA')
+      if (err) {
+        if (err.code === 'ENODATA')
           stateObj.block_urls = stateObj.block_urls.map(urlObj2 => {
-            if(urlObj2.dns === urlObj.dns)
+            if (urlObj2.dns === urlObj.dns)
               urlObj2.error = 'The url you gave isn\'t invalid.'
             return urlObj2
           });
         else
           console.error("Error: ", err);
       }
-      else
-      {
+      else {
         addresses.forEach(address => {
           // console.log("Address: ", address)
           blockIP2Dns[address] = urlObj.dns
@@ -45,7 +45,7 @@ setBlockIPs = () => {
 
 saveState = () => {
   fs.writeFile(statefilepath, JSON.stringify(stateObj), err => {
-    if(err)
+    if (err)
       console.error(err);
     else
       console.log("File Saved.");
@@ -54,11 +54,10 @@ saveState = () => {
 
 loadStateFile().then(data => {
   stateObj = data;
-  if(stateObj.msg === awakeMsg)
-  {
-        stateObj.msg = workerMsg;
-        console.log("Awake recieved.");
-        saveState();
+  if (stateObj.msg === awakeMsg) {
+    stateObj.msg = workerMsg;
+    console.log("Awake recieved.");
+    saveState();
   }
   setBlockIPs();
 }).catch(error => console.log(error));
@@ -67,8 +66,7 @@ try {
   fs.watch(statefilepath, (eventType, filename) => {
     loadStateFile().then(data => {
       stateObj = data;
-      if(stateObj.msg === awakeMsg)
-      {
+      if (stateObj.msg === awakeMsg) {
         stateObj.msg = workerMsg;
         console.log("Awake recieved.");
         saveState();
@@ -80,13 +78,11 @@ try {
 catch (err) {
   console.error(err);
   console.log("Closing worker process.");
-  if(err.code == 'ENOENT' || err.errno == -4058)
-  {
+  if (err.code == 'ENOENT' || err.errno == -4058) {
     console.log("STATE FILE MISSING.");
     process.exit(-4058);
   }
-  else
-  {
+  else {
     process.exit(1)
   }
 }
@@ -94,32 +90,27 @@ catch (err) {
 //Find current window and set worker state
 findWindows = async () => {
   window = await activeWin();
-  if(typeof window === 'undefined')
+  if (typeof window === 'undefined')
     return setTimeout(findWindows, 500);
   // console.log(window);
-  if(process.platform === 'darwin')
-  {
+  if (process.platform === 'darwin') {
     const possiblename = window.owner.path.split("/").find(dir => dir.split('.app').length > 1);
-    if(typeof possiblename !== 'undefined')
+    if (typeof possiblename !== 'undefined')
       window.owner.name = window.owner.path.split("/").find(dir => dir.split('.app').length > 1).split(".app")[0]
   }
   if (window != null && appProsDict[window.owner.name] != null) {
-    if(currentApp !== window.owner.name)
-    {
+    if (currentApp !== window.owner.name) {
       currentApp = window.owner.name;
       appProsDict[currentApp].forEach(pid => {
-        if (typeof prosConnDict[pid] !== 'undefined')
-        {
+        if (typeof prosConnDict[pid] !== 'undefined') {
           // console.log("Checking\n", prosConnDict[pid], "\n\nAgainst\n", blockIP2Dns)
           prosConnDict[pid].forEach(addrtime => {
-            if(typeof blockIP2Dns[addrtime.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time))
-            {
+            if (typeof blockIP2Dns[addrtime.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time)) {
               console.log("Added site based on window highlight")
               stateObj.block_urls = stateObj.block_urls.map(urlObj => {
-                if (urlObj.dns === blockIP2Dns[addrtime.address])
-                {
+                if (urlObj.dns === blockIP2Dns[addrtime.address]) {
                   urlObj.visits += 1;
-                  if(urlObj.visits >= urlObj.maxvisits)
+                  if (urlObj.visits >= urlObj.maxvisits)
                     sendEmail(urlObj.dns, stateObj.user_email, stateObj.ref_email);
                 }
                 return urlObj;
@@ -138,23 +129,21 @@ findWindows = async () => {
 const updateProsConnDict = () => {
   netstat().then(itemlist => {
     itemlist.forEach(item => {
-      if(!item)
+      if (!item)
         return;
       if (item.state === 'ESTABLISHED' && !isNaN(item.remote.port) && item.remote.address != null && item.remote.address != '127.0.0.1') {
         if (prosConnDict[item.pid] === undefined)
           prosConnDict[item.pid] = []
         prevConn = prosConnDict[item.pid].find(addrtime => addrtime.address === item.remote.address)
-        if (typeof prevConn === 'undefined' || prevConn === null)
-        {
+        if (typeof prevConn === 'undefined' || prevConn === null) {
           prosConnDict[item.pid].push({ address: item.remote.address, time: Date.now() });
-          if(typeof blockIP2Dns[item.remote.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time))
-          {
+          if (typeof blockIP2Dns[item.remote.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time)) {
             console.log("Adding site from connection.");
             stateObj.block_urls = stateObj.block_urls.map(urlObj => {
               if (urlObj.dns === blockIP2Dns[item.remote.address])
                 urlObj.visits += 1;
-                if(urlObj.visits >= urlObj.maxvisits)
-                    sendEmail(urlObj.dns, stateObj.user_email, stateObj.ref_email);
+              if (urlObj.visits >= urlObj.maxvisits)
+                sendEmail(urlObj.dns, stateObj.user_email, stateObj.ref_email);
               return urlObj;
             })
             saveState();
@@ -175,10 +164,9 @@ const updateProsConnDict = () => {
 
 updateProcessTable = async () => {
   var processTable;
-  if(process.platform === 'win32')
+  if (process.platform === 'win32')
     processTable = await fastlist();
-  else
-  {
+  else {
     processTable = await psList();
   }
   // console.log(processTable);
@@ -186,15 +174,14 @@ updateProcessTable = async () => {
     return setTimeout(updateProcessTable, 1000)
   newAppProsDict = {}
   processTable.forEach(entry => {
-    if(process.platform === 'darwin')
-    {
+    if (process.platform === 'darwin') {
       const possiblename = entry.cmd.split("/").find(dir => dir.split('.app').length > 1);
-      if(typeof possiblename !== 'undefined')
+      if (typeof possiblename !== 'undefined')
         entry.name = entry.cmd.split("/").find(dir => dir.split('.app').length > 1).split(".app")[0]
     }
     if (newAppProsDict[entry.name] === undefined)
       newAppProsDict[entry.name] = [];
-    newAppProsDict[entry.name].push(entry.pid); 
+    newAppProsDict[entry.name].push(entry.pid);
   })
   appProsDict = newAppProsDict;
   setTimeout(updateProcessTable, 1000);

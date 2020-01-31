@@ -1,7 +1,7 @@
 "using strict"
 
 const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
-const forever = require('forever-monitor');
+const { spawn } = require('child_process');
 const { workerId, workerMsg, awakeMsg } = require("./service/config");
 const path = require("path");
 const url = require("url");
@@ -17,7 +17,7 @@ const {
   REQUEST_STATE
 } = require("./src/actions/types");
 const { PATH: statefilepath } = require("./config/statefilepath");
-const { loadStateFile, foreverlist } = require("./config/util");
+const { loadStateFile } = require("./config/util");
 const defaultState = require("./config/defaultstate");
 const fs = require("fs");
 
@@ -44,14 +44,14 @@ try {
     console.log(eventType);
     loadStateFile().then(data => {
       stateObj = data;
-      if(typeof mainWindow !== 'undefined' && mainWindow !== null)
+      if (typeof mainWindow !== 'undefined' && mainWindow !== null)
         mainWindow.webContents.send(RECEIVED_STATE, stateObj);
     }).catch(error => console.log(error));
   })
 }
 catch (err) {
   console.log(err);
-  if(err.code === 'ENOENT')
+  if (err.code === 'ENOENT')
     writeDefaultState();
 }
 
@@ -100,7 +100,7 @@ const performJsonActionOnFile = func => {
   return new Promise((resolve, reject) => {
     fs.readFile(statefilepath, "utf8", (err, data) => {
       if (err) reject(err);
-      try{
+      try {
         var stateObject = JSON.parse(data);
         stateObject = func(stateObject);
         console.log(stateObject);
@@ -109,7 +109,7 @@ const performJsonActionOnFile = func => {
           console.log("Successfully saved.");
           resolve(stateObject);
         });
-      } catch(err) {
+      } catch (err) {
         console.log(err);
         setTimeout(() => performJsonActionOnFile(func).then(rslt => resolve(rslt)), 500);
       }
@@ -117,7 +117,19 @@ const performJsonActionOnFile = func => {
   });
 };
 
-const startHiddenService = async () => {
+
+const spawnService = () => {
+  if (process.platform === 'win32')
+    child = spawn('node', [path.join(__dirname, "service", "worker.js")], { detached: true })
+  else
+    child = spawn('nohup', ['node', path.join(__dirname, "service", "worker.js")], { detached: true })
+  child.on('close', code => {
+    console.error("Worker exited with code: " + code);
+    spawnService();
+  });
+}
+
+const testServiceOpen = async () => {
   const start = Date.now();
   performJsonActionOnFile(stateObj => {
     stateObj.msg = awakeMsg;
@@ -126,16 +138,11 @@ const startHiddenService = async () => {
     const interval = Date.now() - start;
     setTimeout(() => {
       loadStateFile().then(stateObj => {
-        if(stateObj.msg !== workerMsg)
-        {
-          const child = new (forever.Monitor)(path.join(__dirname, "service", "worker.js"), {max: 1, uid: workerId, outFile: './service/worker.log'});
-          child.on('exit:code', code => {
-            console.error("Worker exited with code: " + code);
-          });
-          child.start();
-      }
+        if (stateObj.msg !== workerMsg) {
+          spawnService();
+        }
       })
-    }, 5*interval);
+    }, 5 * interval);
   })
 }
 
@@ -196,11 +203,11 @@ function createWindow() {
 if (process.argv.indexOf("--hidden") === -1)
   app.on("ready", () => {
     createWindow();
-    startHiddenService();
+    testServiceOpen();
   });
 else {
   app.on("ready", () => {
-    startHiddenService();
+    testServiceOpen();
     process.exit(0);
   });
 }
@@ -212,7 +219,7 @@ app.on("window-all-closed", () => {
   // if (process.platform !== "darwin") {
   //   app.quit();
   // }
-  startHiddenService();
+  testServiceOpen();
   process.exit(0);
 });
 
@@ -248,7 +255,8 @@ ipc.on(ADD_URL, (event, arg) => {
 ipc.on(DELETE_URL, (event, arg) => {
   console.log("A url was deleted", arg);
   performJsonActionOnFile(stateObj => {
-    return stateObj.block_urls.filter(url => url.id == arg);
+    stateObj.block_urls = stateObj.block_urls.filter(url => url.id !== arg);
+    return stateObj
   });
 });
 
