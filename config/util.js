@@ -22,11 +22,10 @@ const loadStateFile = () => {
         // console.log(stateObj);
         resolve(stateObj)
       } catch (err) {
-        console.log("Error: ", err)
-        console.log("Buffer ", data);
         reject({
           msg: 'An error occured while parsing the file.',
-          error: err
+          err,
+          data
         })
       }
     })

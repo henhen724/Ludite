@@ -41,6 +41,7 @@
     "babili-webpack-plugin": "^0.1.2",
     "css-loader": "^3.2.0",
     "electron": "^7.1.2",
+    "electron-installer-dmg": "^3.0.0",
     "electron-packager": "^14.1.0",
     "electron-rebuild": "^1.8.8",
     "electron-squirrel-startup": "^1.0.0",

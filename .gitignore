@@ -10,3 +10,4 @@ builds/
 **.msi
 **RELEASES
 **.nupkg
+**.dmg

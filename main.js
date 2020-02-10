@@ -37,10 +37,10 @@ const defaultState = require("./config/defaultstate");
 
 //Write default state to the state file (Used when statefile is missing or otherwise corrupted)
 writeDefaultState = () => {
-  fs.writeFile(statefilepath, JSON.stringify(defaultState), err => {
-    if (err) {
+  fs.writeFile(statefilepath, JSON.stringify(defaultState), error => {
+    if (error) {
       console.log("Unable to write file.");
-      throw err;
+      throw error;
     }
   });
 }
@@ -64,9 +64,10 @@ try {
   })
 }
 catch (err) {
-  console.log(err);
   if (err.code === 'ENOENT')
     writeDefaultState();
+  else
+    console.log(err);
 }
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -249,14 +250,20 @@ const buf = Buffer.alloc(256);
 
 //IPC event functions which write input from the render thread to file
 
-
-ipc.on(REQUEST_STATE, (event, arg) => {
+const readState = (event, args) => {
   fs.readFile(statefilepath, "utf8", (err, data) => {
-    if (err) throw err;
+    if (err) {
+      if(err.code === "ENOENT")
+        setTimeout(readState, 1000, event, args);
+      else
+        throw err;
+    }
     console.log(data);
     event.sender.send(RECEIVED_STATE, JSON.parse(data));
   });
-});
+}
+
+ipc.on(REQUEST_STATE, readState);
 
 ipc.on(ADD_URL, (event, arg) => {
   console.log("A url was added", arg);
