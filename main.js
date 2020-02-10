@@ -1,9 +1,21 @@
 "using strict"
 
-const { app, BrowserWindow, Menu, ipcMain: ipc } = require("electron");
-const { spawn } = require('child_process');
-const { workerId, workerMsg, awakeMsg } = require("./service/config");
+//Handling Squirrel events for setup, update, and uninstall
+const app = require("electron").app;
+const { spawn } = require("child_process");
 const path = require("path");
+const { PATH: statefilepath, dataFolder } = require("./config/statefilepath");
+const fs = require("fs");
+const handleSquirrelEvent = require("./config/squirrelEvents");
+
+if (process.platform === 'win32' && handleSquirrelEvent(app)) {
+  app.quit();
+  process.exit(0);
+}
+
+//The app proper begins here
+const { BrowserWindow, Menu, ipcMain: ipc } = require("electron");
+const { workerId, workerMsg, awakeMsg } = require("./service/config");
 const url = require("url");
 const {
   ADD_URL,
@@ -16,10 +28,12 @@ const {
   RECEIVED_STATE,
   REQUEST_STATE
 } = require("./src/actions/types");
-const { PATH: statefilepath } = require("./config/statefilepath");
 const { loadStateFile } = require("./config/util");
 const defaultState = require("./config/defaultstate");
-const fs = require("fs");
+
+
+
+
 
 //Write default state to the state file (Used when statefile is missing or otherwise corrupted)
 writeDefaultState = () => {

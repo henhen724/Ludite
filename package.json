@@ -1,6 +1,6 @@
 {
   "name": "ludite",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Social punishment self control app",
   "author": {
     "name": "Henry Hunt",
@@ -16,13 +16,18 @@
     "type": "git",
     "url": "https://github.com/henhen724/Ludite.git"
   },
+  "build": {
+    "appId": "com.ludite.app",
+    "productName": "Ludite"
+  },
   "main": "main.js",
   "scripts": {
     "prod": "webpack --config webpack.build.config.js && electron --noDevServer .",
     "dev": "webpack-dev-server --hot --host 0.0.0.0 --port 4000 --config=./webpack.dev.config.js",
     "build": "webpack --config webpack.build.config.js",
+    "build-installer": "node build_installer.js",
     "package": "webpack --config webpack.build.config.js",
-    "postpackage": "electron-packager ./ --out=./builds --overwrite"
+    "postpackage": "node package_asar.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.3",
@@ -38,6 +43,8 @@
     "electron": "^7.1.2",
     "electron-packager": "^14.1.0",
     "electron-rebuild": "^1.8.8",
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-winstaller": "^4.0.0",
     "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^4.2.0",
     "html-webpack-plugin": "^3.2.0",
@@ -56,8 +63,6 @@
     "@material-ui/icons": "^4.5.1",
     "active-win": "^6.0.0",
     "ffi-napi": "^2.4.5",
-    "forever": "^1.0.0",
-    "forever-monitor": "^1.7.1",
     "iconv": "^2.3.5",
     "nan": "^2.14.0",
     "nodemailer": "^6.4.2",

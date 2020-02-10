@@ -5,3 +5,8 @@ dist/
 builds/
 .luditedata
 **.log
+**.zip
+**.exe
+**.msi
+**RELEASES
+**.nupkg
