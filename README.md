@@ -1,6 +1,6 @@
 # Ludite Management App
 
-_Using Electron, React, Redux, and Webpack
+_Using Electron, React, Redux, and Webpack_
 
 ###### Acknowledgement
 
