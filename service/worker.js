@@ -2,7 +2,7 @@ const activeWin = require("active-win");
 const fs = require("fs");
 const psList = require("ps-list");
 const defaultState = require("../config/defaultstate");
-const { PATH: statefilepath } = require("../config/statefilepath");
+const { PATH: statefilepath, WORKERERRPATH, WORKERLOGPATH } = require("../config/statefilepath");
 const { loadStateFile, netstat, fastlist, duringInterval, sendEmail } = require("../config/util");
 const { awakeMsg, workerMsg } = require("./config");
 const dns = require("dns");
@@ -14,6 +14,18 @@ var appProsDict = {} //App names to list of their process objects
 var blockIP2Dns = {} //Keys are all IPs to track and their related dns
 var currentApp = ""
 var stateObj = defaultState
+
+//Setting output to pipe to the worker log file
+const workerLog = fs.createWriteStream(WORKERLOGPATH);
+process.stdout.write = workerLog.write.bind(workerLog);
+//Setting error output to pipe to the worker err file
+const workerErr = fs.createWriteStream(WORKERERRPATH);
+process.stderr.write = workerErr.write.bind(workerErr);
+
+process.on('uncaughtException', err => {
+  console.error((err && err.stack) ? err.stack : err);
+  process.exit(1)
+});
 
 setBlockIPs = () => {
   // console.log(dns.getServers());
@@ -34,7 +46,7 @@ setBlockIPs = () => {
       else {
         addresses.forEach(address => {
           // console.log("Address: ", address)
-          blockIP2Dns[address] = urlObj.dns
+          blockIP2Dns[address] = { dns: urlObj.dns, time: Date.now() }
         })
       }
     })
@@ -108,7 +120,7 @@ findWindows = async () => {
             if (typeof blockIP2Dns[addrtime.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time)) {
               console.log("Added site based on window highlight")
               stateObj.block_urls = stateObj.block_urls.map(urlObj => {
-                if (urlObj.dns === blockIP2Dns[addrtime.address]) {
+                if (urlObj.dns === blockIP2Dns[addrtime.address].dns) {
                   urlObj.visits += 1;
                   if (urlObj.visits >= urlObj.maxvisits)
                     sendEmail(urlObj.dns, stateObj.user_email, stateObj.ref_email);
@@ -140,7 +152,7 @@ const updateProsConnDict = () => {
           if (typeof blockIP2Dns[item.remote.address] !== 'undefined' && duringInterval(stateObj.start_time, stateObj.end_time)) {
             console.log("Adding site from connection.");
             stateObj.block_urls = stateObj.block_urls.map(urlObj => {
-              if (urlObj.dns === blockIP2Dns[item.remote.address])
+              if (urlObj.dns === blockIP2Dns[item.remote.address].dns)
                 urlObj.visits += 1;
               if (urlObj.visits >= urlObj.maxvisits)
                 sendEmail(urlObj.dns, stateObj.user_email, stateObj.ref_email);
@@ -188,6 +200,7 @@ updateProcessTable = async () => {
 }
 
 removeTimeoutConn = async () => {
+  // Remove connection which have timeout from the netstat table
   prosToSearch = Object.keys(prosConnDict);
   if (prosToSearch === [] || prosToSearch === undefined)
     setTimeout(removeTimeoutConn, 500);
@@ -196,15 +209,23 @@ removeTimeoutConn = async () => {
     if (prosConnDict[pid].length === 0)
       delete prosConnDict[pid];
   });
+  // Do the same thing for the blockIP2Dns table
+  addrToSearch = Object.keys(blockIP2Dns);
+  if (addrToSearch === [] || addrToSearch === undefined)
+    setTimeout(removeTimeoutConn, 500);
+  addrToSearch.forEach(address => {
+    if (Date.now() - blockIP2Dns[address].time >= 100000)
+      delete blockIP2Dns[address];
+  });
   setTimeout(removeTimeoutConn, 500);
 }
 
 printInfo = async () => {
   //console.clear();
-  console.log("Open Connections:");
-  console.table(Object.keys(prosConnDict).map((pid, index) => { return { 'pid': pid, 'address': prosConnDict[pid].map(addrtime => addrtime.address) }; }));
-  console.log("App Process Dictionary:");
-  console.table(Object.keys(appProsDict).map((app, index) => { return { 'Application': app, 'processes': appProsDict[app] } }));
+  // console.log("Open Connections:");
+  // console.table(Object.keys(prosConnDict).map((pid, index) => { return { 'pid': pid, 'address': prosConnDict[pid].map(addrtime => addrtime.address) }; }));
+  // console.log("App Process Dictionary:");
+  // console.table(Object.keys(appProsDict).map((app, index) => { return { 'Application': app, 'processes': appProsDict[app] } }));
   if (typeof currentApp !== 'undefined' && typeof appProsDict[currentApp] !== 'undefined') {
     console.log("Current Highlighted App: ", currentApp);
     console.log("Process Assosiated: ", appProsDict[currentApp]);
@@ -214,6 +235,7 @@ printInfo = async () => {
         console.table(prosConnDict[pid]);
     });
   }
+  console.table(Object.keys(blockIP2Dns).map((address, index) => { return { 'dns': blockIP2Dns[address].dns, 'address': address } }));
   setTimeout(printInfo, 3000);
 }
 
@@ -222,4 +244,4 @@ updateProcessTable();
 updateProsConnDict();
 removeTimeoutConn();
 findWindows();
-// printInfo();
+printInfo();

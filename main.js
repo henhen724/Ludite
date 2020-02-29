@@ -4,7 +4,7 @@
 const app = require("electron").app;
 const { spawn } = require("child_process");
 const path = require("path");
-const { PATH: statefilepath, dataFolder } = require("./config/statefilepath");
+const { PATH: statefilepath, dataFolder, WORKERLOGPATH, WORKERERRPATH } = require("./config/statefilepath");
 const fs = require("fs");
 const handleSquirrelEvent = require("./config/squirrelEvents");
 
@@ -133,6 +133,8 @@ const performJsonActionOnFile = func => {
 };
 
 
+
+
 const spawnService = () => {
   if (process.platform === 'win32')
     child = spawn('node', [path.join(__dirname, "service", "worker.js")], { detached: true })
@@ -140,6 +142,9 @@ const spawnService = () => {
     child = spawn('nohup', ['node', path.join(__dirname, "service", "worker.js")], { detached: true })
   child.on('close', code => {
     console.error("Worker exited with code: " + code);
+    if (code !== 0) {
+      throw new Error(`The worker crashed with code ${code} see ${path.resolve(WORKERLOGPATH)} and ${path.resolve(WORKERERRPATH)}`)
+    }
     spawnService();
   });
 }
@@ -253,7 +258,7 @@ const buf = Buffer.alloc(256);
 const readState = (event, args) => {
   fs.readFile(statefilepath, "utf8", (err, data) => {
     if (err) {
-      if(err.code === "ENOENT")
+      if (err.code === "ENOENT")
         setTimeout(readState, 1000, event, args);
       else
         throw err;

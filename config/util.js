@@ -89,14 +89,13 @@ const sendEmail = async (site, user_email, ref_email) => {
 
   // send mail with defined transport object
   let info = await transporter.sendMail({
-    from: user_email, // sender address
-    to: ref_email, // list of receivers
+    from: 'luditeapp@gmail.com',
+    to: `${ref_email}, ${user_email}`,
     subject: "Hello", // Subject line
     text: "Hello world", // plain text body
   });
 
   console.log("Message sent: %s", info);
-  // Message sent: <b658f8ca-6296-ccf4-8306-87d57a0b4321@example.com>
 
 }
 

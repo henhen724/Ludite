@@ -25,7 +25,7 @@
     "prod": "webpack --config webpack.build.config.js && electron --noDevServer .",
     "dev": "webpack-dev-server --hot --host 0.0.0.0 --port 4000 --config=./webpack.dev.config.js",
     "build": "webpack --config webpack.build.config.js",
-    "build-installer": "node build_installer.js",
+    "build-installer": "node --max-old-space-size=1000000 build_installer.js",
     "package": "webpack --config webpack.build.config.js",
     "postpackage": "node package_asar.js"
   },
@@ -41,8 +41,7 @@
     "babili-webpack-plugin": "^0.1.2",
     "css-loader": "^3.2.0",
     "electron": "^7.1.2",
-    "electron-installer-dmg": "^3.0.0",
-    "electron-packager": "^14.1.0",
+    "electron-packager": "^14.2.1",
     "electron-rebuild": "^1.8.8",
     "electron-squirrel-startup": "^1.0.0",
     "electron-winstaller": "^4.0.0",
