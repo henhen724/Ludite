@@ -7,6 +7,7 @@ const bundleElectronApp = async options => {
 
 bundleElectronApp({
     dir: "./",
+    ignore: ["installers", "builds"],
     out: "./builds",
     overwrite: true,
     asar: true
