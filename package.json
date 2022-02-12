@@ -36,7 +36,7 @@
     "@babel/plugin-proposal-function-sent": "^7.7.0",
     "@babel/plugin-proposal-object-rest-spread": "^7.6.2",
     "@babel/preset-react": "^7.7.0",
-    "ajv": "^6.10.2",
+    "ajv": "^6.12.3",
     "babel-loader": "^8.0.6",
     "babili-webpack-plugin": "^0.1.2",
     "css-loader": "^3.2.0",
